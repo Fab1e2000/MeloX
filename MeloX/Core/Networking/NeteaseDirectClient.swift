@@ -196,12 +196,18 @@ final class NeteaseDirectClient {
             cookieHeaderOverride ?? cookieHeader(os: cookieOS, appVersion: appVersion),
             forHTTPHeaderField: "Cookie"
         )
-        var components = URLComponents()
-        components.queryItems = form.map { URLQueryItem(name: $0.key, value: $0.value) }
-        request.httpBody = components.percentEncodedQuery?.data(using: .utf8)
+        request.httpBody = Self.formEncodedData(form)
 
         let (data, response) = try await session.data(for: request)
         return try decode(data: data, response: response)
+    }
+
+    // URL query encoding leaves '+' literal, but form decoders read it as a space.
+    // WEAPI params contain Base64, so literal plus signs must be percent-encoded.
+    static func formEncodedData(_ form: [String: String]) -> Data {
+        Data(form.keys.sorted().map { key in
+            "\(encodeURIComponent(key))=\(encodeURIComponent(form[key] ?? ""))"
+        }.joined(separator: "&").utf8)
     }
 
     private func decode<Response: Decodable>(
