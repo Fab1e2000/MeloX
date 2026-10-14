@@ -946,16 +946,12 @@ final class NeteaseAPI {
     }
 
     func setPlaylistSubscribed(id: Int, isSubscribed: Bool) async throws {
-        var data: [String: Any] = ["id": id]
-        if isSubscribed {
-            data["checkToken"] = NeteaseDirectClient.checkToken
-        }
+        // Match the website's WEAPI route; an empty response does not prove the write failed.
         let path = isSubscribed ? "/api/playlist/subscribe" : "/api/playlist/unsubscribe"
-        let response: APIStatusResponse = try await client.eapi(
+        let response: APIStatusResponse = try await client.weapi(
             path,
-            data: data,
-            requiresCheckToken: true,
-            authenticated: true
+            data: ["id": id],
+            retryEmptyResponse: false
         )
         try validate(responseCode: response.code, message: response.message)
     }

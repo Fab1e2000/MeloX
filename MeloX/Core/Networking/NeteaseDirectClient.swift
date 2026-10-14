@@ -56,14 +56,16 @@ final class NeteaseDirectClient {
 
     func weapi<Response: Decodable>(
         _ uri: String,
-        data: [String: Any] = [:]
+        data: [String: Any] = [:],
+        retryEmptyResponse: Bool = true
     ) async throws -> Response {
         let path = uri.replacingOccurrences(of: "/api/", with: "/weapi/")
         guard let url = URL(string: "https://music.163.com\(path)") else {
             throw APIError.requestEncoding
         }
 
-        for attempt in 0..<3 {
+        let attempts = retryEmptyResponse ? 3 : 1
+        for attempt in 0..<attempts {
             var requestData = data
             requestData["csrf_token"] = csrfToken
             let json = try jsonString(requestData)
@@ -83,7 +85,7 @@ final class NeteaseDirectClient {
                     cookieHeaderOverride: processedWeapiCookieHeader(for: uri)
                 )
             } catch APIError.emptyResponse(let statusCode) {
-                guard attempt < 2 else {
+                guard attempt + 1 < attempts else {
                     throw APIError.emptyResponse(statusCode: statusCode)
                 }
                 try await Task.sleep(for: .milliseconds(180 * (attempt + 1)))
