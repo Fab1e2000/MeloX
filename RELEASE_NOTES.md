@@ -5,6 +5,7 @@
 ### 简体中文
 
 - 初步适配 iPhone Duo
+- 增加了听歌识曲的应用内音频来源，以及 iOS 27 的跨 App 本机内录
 - 增加了歌单、专辑和收藏歌曲的「定位到正在播放」功能
 - 修复了歌单与专辑收藏失败的问题（感谢 @Fab1e2000）
 - 修复了切歌后沿用上一首播放进度，以及延迟网络回调可能导致崩溃的问题（感谢 @Arcdiverrr1026）
@@ -14,6 +15,7 @@
 ### English
 
 - Added initial iPhone Duo support
+- Added App Audio for Song Recognition and cross-app System Audio capture on iOS 27
 - Added “Locate Now Playing” to playlists, albums, and favorite songs
 - Fixed failures when adding playlists and albums to favorites (thanks to @Fab1e2000)
 - Fixed tracks inheriting the previous song's playback position and potential crashes from late network callbacks (thanks to @Arcdiverrr1026)
@@ -24,6 +26,7 @@
 
 ### 简体中文
 
+- 增加了听歌识曲的「本机内录」音频来源，支持识别本机和耳机中正在播放的音乐
 - 增加了歌单、专辑和收藏歌曲的「定位到正在播放」功能
 - 修复了切歌后沿用上一首播放进度，以及延迟网络回调可能导致崩溃的问题（感谢 @Arcdiverrr1026）
 - 修复了英文界面中搜索范围分段选择器文字溢出的问题（感谢 @crayonlu）
@@ -32,6 +35,7 @@
 
 ### English
 
+- Added a System Audio source for Song Recognition to identify music playing on this Mac, including through headphones
 - Added “Locate Now Playing” to playlists, albums, and favorite songs
 - Fixed tracks inheriting the previous song's playback position and potential crashes from late network callbacks (thanks to @Arcdiverrr1026)
 - Fixed search scope segmented picker overflow with English labels (thanks to @crayonlu)

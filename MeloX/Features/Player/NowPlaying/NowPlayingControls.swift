@@ -373,7 +373,6 @@ private struct SystemVolumeSlider: UIViewRepresentable {
         )
         volumeView.backgroundColor = .clear
         volumeView.showsVolumeSlider = true
-        volumeView.showsRouteButton = false
         volumeView.tintColor = .white
         return volumeView
     }
