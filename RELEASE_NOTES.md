@@ -32,6 +32,7 @@
 - 修复了英文界面中搜索范围分段选择器文字溢出的问题（感谢 @crayonlu）
 - 修复了同一句歌词换行后各行文字大小不一致的问题
 - 修复了全屏播放器顶部出现黑条的问题
+- 修复了听歌识曲缺少入口的问题
 
 ### English
 
@@ -41,3 +42,4 @@
 - Fixed search scope segmented picker overflow with English labels (thanks to @crayonlu)
 - Fixed inconsistent text sizes across wrapped lines of the same lyric
 - Fixed the black bar at the top of the full-screen player
+- Fixed the missing Song Recognition entry points

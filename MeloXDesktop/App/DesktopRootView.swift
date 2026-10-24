@@ -45,6 +45,15 @@ struct DesktopRootView: View {
             )
         }
         .toolbar(removing: .sidebarToggle)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("ui.recognition.title", systemImage: "waveform") {
+                    ui.sheet = .recognition
+                }
+                .help(L10n.string("ui.recognition.title"))
+                .disabled(ui.sheet != nil)
+            }
+        }
         .toolbarVisibility(
             ui.isNowPlayingPresented && isWindowFullScreen ? .hidden : .automatic,
             for: .windowToolbar
