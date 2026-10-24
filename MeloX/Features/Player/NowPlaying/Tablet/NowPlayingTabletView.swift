@@ -12,16 +12,24 @@ struct NowPlayingTabletView: View {
     let highlightedLyricID: LyricLine.ID?
     let artworkNamespace: Namespace.ID
     let onDismiss: () -> Void
+    let onExpandLyrics: () -> Void
     let onLyricsContentPrepared: () -> Void
-
-    @State private var showsFullScreenLyrics = false
-    @State private var showsTextPVControls = true
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            if showsFullScreenLyrics, page == .lyrics {
-                fullScreenLyrics
-                    .transition(.opacity)
+            if #available(iOS 27.1, *) {
+                NowPlayingAdaptiveView(
+                    page: $page,
+                    pageTransition: pageTransition,
+                    song: song,
+                    lyrics: lyrics,
+                    lyricError: lyricError,
+                    highlightedLyricID: highlightedLyricID,
+                    artworkNamespace: artworkNamespace,
+                    onDismiss: onDismiss,
+                    onExpandLyrics: onExpandLyrics,
+                    onLyricsContentPrepared: onLyricsContentPrepared
+                )
             } else {
                 GeometryReader { proxy in
                     let layout = NowPlayingTabletLayout(viewport: proxy.size)
@@ -33,13 +41,6 @@ struct NowPlayingTabletView: View {
                 .transition(.opacity)
             }
         }
-        .onChange(of: page) {
-            showsFullScreenLyrics = false
-        }
-        .animation(
-            accessibilityReduceMotion ? nil : .smooth(duration: 0.4),
-            value: showsFullScreenLyrics
-        )
     }
 
     private func standardPlayer(layout: NowPlayingTabletLayout) -> some View {
@@ -108,7 +109,7 @@ struct NowPlayingTabletView: View {
                         }
 
                         if !lyrics.isEmpty {
-                            Button(action: expandLyrics) {
+                            Button(action: onExpandLyrics) {
                                 Image(systemName: "arrow.up.left.and.arrow.down.right")
                                     .font(.system(size: 17, weight: .medium))
                                     .frame(width: 44, height: 44)
@@ -132,40 +133,5 @@ struct NowPlayingTabletView: View {
         }
         .padding(.horizontal, 20)
         .foregroundStyle(.white)
-    }
-
-    @ViewBuilder
-    private var fullScreenLyrics: some View {
-        if settings.lyricsStyle == .textPV {
-            TextPVFullScreenPlayerView(
-                page: $page,
-                showsControls: $showsTextPVControls,
-                song: song,
-                lyrics: lyrics,
-                errorMessage: lyricError,
-                highlightedLyricID: highlightedLyricID,
-                onDismiss: { showsFullScreenLyrics = false },
-                onToggleInterface: toggleTextPVControls
-            )
-        } else {
-            SkylineLyricsView(
-                artworkURL: song.album?.artworkURL,
-                lyrics: lyrics,
-                errorMessage: lyricError,
-                highlightedLyricID: highlightedLyricID,
-                onExit: { showsFullScreenLyrics = false }
-            )
-        }
-    }
-
-    private func expandLyrics() {
-        showsTextPVControls = true
-        showsFullScreenLyrics = true
-    }
-
-    private func toggleTextPVControls() {
-        withAnimation(accessibilityReduceMotion ? nil : .smooth(duration: 0.3)) {
-            showsTextPVControls.toggle()
-        }
     }
 }

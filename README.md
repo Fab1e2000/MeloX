@@ -326,7 +326,7 @@ MeloX 使用固定 32 秒窗口、FP16 计算精度的 Core ML ML Program；模�
 
 ## 运行环境
 
-- Xcode 26.6 或更高版本
+- Xcode 27.1 或更高版本
 - iOS / iPadOS 26.0 或更高版本
 - macOS 15.0 或更高版本
 - watchOS 10.0 或更高版本（手表端仍在开发中）

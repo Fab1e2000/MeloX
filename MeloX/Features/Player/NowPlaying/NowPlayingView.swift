@@ -6,6 +6,7 @@ struct NowPlayingView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @Environment(\.accessibilityVoiceOverEnabled)
     private var accessibilityVoiceOverEnabled
@@ -22,6 +23,8 @@ struct NowPlayingView: View {
     @State private var queueSongHeaderOffset: CGFloat = 0
     @State private var artworkPageFrame = CGRect.zero
     @State private var preparedLyricsSongID: Song.ID?
+    @State private var hasDisplayDivision = false
+    @State private var showsFullScreenLyrics = false
     @Namespace private var pageArtworkNamespace
 
     private var page: NowPlayingPage {
@@ -56,7 +59,9 @@ struct NowPlayingView: View {
                 }
 
                 if let song = player.currentSong {
-                    if usesTabletLayout {
+                    if showsFullScreenLyrics, page == .lyrics {
+                        fullScreenLyrics(for: song)
+                    } else if usesExpandedLayout {
                         NowPlayingTabletView(
                             page: pageSelection,
                             pageTransition: pageTransition,
@@ -66,6 +71,10 @@ struct NowPlayingView: View {
                             highlightedLyricID: highlightedLyricID,
                             artworkNamespace: pageArtworkNamespace,
                             onDismiss: { dismiss() },
+                            onExpandLyrics: {
+                                showsLyricsControls = true
+                                showsFullScreenLyrics = true
+                            },
                             onLyricsContentPrepared: {
                                 markLyricsContentPrepared(for: song.id)
                             }
@@ -127,6 +136,16 @@ struct NowPlayingView: View {
                         .accessibilityLabel("ui.text_pv.landscape_recommended")
                 }
             }
+        }
+        .onGeometryChange(for: Bool.self) { proxy in
+            if #available(iOS 27.1, *) {
+                // Keep the inner-display layout stable while the fold flattens.
+                !proxy.reservedRegions(kind: .division, options: .includeInactive).isEmpty
+            } else {
+                false
+            }
+        } action: { hasDivision in
+            hasDisplayDivision = hasDivision
         }
         .background {
             NowPlayingLyricSynchronizer(
@@ -195,6 +214,7 @@ struct NowPlayingView: View {
             await presentLyricsEntrance()
         }
         .onChange(of: page) { _, newPage in
+            showsFullScreenLyrics = false
             if newPage == .lyrics,
                settings.lyricsStyle == .appleMusic {
                 registerAppleMusicControlsActivity()
@@ -235,7 +255,7 @@ struct NowPlayingView: View {
                 registerAppleMusicControlsActivity()
             }
         }
-        .onChange(of: usesTabletLayout) {
+        .onChange(of: usesExpandedLayout) {
             cancelAppleMusicControlsAutoHide()
             showsLyricsControls = true
             registerAppleMusicControlsActivity()
@@ -308,6 +328,30 @@ struct NowPlayingView: View {
         .safeAreaPadding(.bottom, 3)
     }
 
+    @ViewBuilder
+    private func fullScreenLyrics(for song: Song) -> some View {
+        if settings.lyricsStyle == .textPV {
+            TextPVFullScreenPlayerView(
+                page: pageSelection,
+                showsControls: $showsLyricsControls,
+                song: song,
+                lyrics: lyrics,
+                errorMessage: lyricError,
+                highlightedLyricID: highlightedLyricID,
+                onDismiss: { showsFullScreenLyrics = false },
+                onToggleInterface: toggleLyricsControls
+            )
+        } else {
+            SkylineLyricsView(
+                artworkURL: song.album?.artworkURL,
+                lyrics: lyrics,
+                errorMessage: lyricError,
+                highlightedLyricID: highlightedLyricID,
+                onExit: { showsFullScreenLyrics = false }
+            )
+        }
+    }
+
     private func portraitPlayerControlsLayer(
         for song: Song
     ) -> some View {
@@ -366,7 +410,7 @@ struct NowPlayingView: View {
     }
 
     private var usesAutoHidingAppleMusicInterface: Bool {
-        !usesTabletLayout
+        !usesExpandedLayout
             && page == .lyrics
             && settings.lyricsStyle == .appleMusic
     }
@@ -405,12 +449,13 @@ struct NowPlayingView: View {
     }
 
     private var usesFullScreenTextPV: Bool {
-        !usesTabletLayout && page == .lyrics && settings.lyricsStyle == .textPV
+        (!usesExpandedLayout || showsFullScreenLyrics)
+            && page == .lyrics && settings.lyricsStyle == .textPV
     }
 
-    private var usesTabletLayout: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad
-            && horizontalSizeClass == .regular
+    private var usesExpandedLayout: Bool {
+        hasDisplayDivision
+            || (horizontalSizeClass == .regular && verticalSizeClass != .compact)
     }
 
     private var usesMonochromeLyricsBackground: Bool {

@@ -16,48 +16,24 @@ struct SkylineLyricsView: View {
     @State private var accentRGB = ArtworkAccentColorProvider.fallback
 
     var body: some View {
-        ZStack {
-            GeometryReader { proxy in
-                let activeIndex = activeLyricIndex
-
-                ZStack {
-                    skylineBackground
-
-                    if let activeIndex {
-                        SkylineAmbientLyricsView(
-                            line: lyrics[activeIndex],
-                            size: proxy.size,
-                            accentColor: accentColor,
-                            baseFontSize: CGFloat(settings.skylineLyrics.ambientFontSize),
-                            maximumCharacters: settings.skylineLyrics.ambientMaximumCharacters,
-                            maximumVisibleTexts: settings.skylineLyrics.ambientMaximumVisibleTexts,
-                            opacityScale: settings.skylineLyrics.ambientOpacity,
-                            blurScale: CGFloat(settings.skylineLyrics.ambientBlur),
-                            maximumTilt: settings.skylineLyrics.ambientMaximumTilt,
-                            driftScale: CGFloat(settings.skylineLyrics.ambientDrift),
-                            transitionDuration: ambientTransitionDuration(
-                                at: activeIndex
-                            )
-                        )
-
-                        currentLyrics(
-                            at: activeIndex,
-                            in: proxy.size
-                        )
-                    } else {
-                        unavailableContent
-                    }
+        Group {
+            if #available(iOS 27.1, *) {
+                ArrangementView {
+                    focusedLyrics
+                } secondary: {
+                    ambientLyrics
                 }
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .contentShape(.rect)
-                .clipped()
-                .onTapGesture {
-                    toggleControls()
+                .arrangementViewStyle(.overlay)
+            } else {
+                ZStack {
+                    ambientLyrics
+                    focusedLyrics
                 }
             }
-            .ignoresSafeArea(.container)
-
-            exitControl
+        }
+        .background {
+            skylineBackground
+                .ignoresSafeArea(.container)
         }
         .accessibilityAction(named: L10n.string("ui.lyrics.return_standard")) {
             onExit()
@@ -94,6 +70,51 @@ struct SkylineLyricsView: View {
                 controlsAreVisible = false
             }
         }
+    }
+
+    private var focusedLyrics: some View {
+        ZStack {
+            GeometryReader { proxy in
+                Group {
+                    if let activeIndex = activeLyricIndex {
+                        currentLyrics(at: activeIndex, in: proxy.size)
+                    } else {
+                        unavailableContent
+                    }
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .contentShape(.rect)
+                .clipped()
+                .onTapGesture {
+                    toggleControls()
+                }
+            }
+
+            exitControl
+        }
+    }
+
+    private var ambientLyrics: some View {
+        GeometryReader { proxy in
+            if let activeIndex = activeLyricIndex {
+                SkylineAmbientLyricsView(
+                    line: lyrics[activeIndex],
+                    size: proxy.size,
+                    accentColor: accentColor,
+                    baseFontSize: CGFloat(settings.skylineLyrics.ambientFontSize),
+                    maximumCharacters: settings.skylineLyrics.ambientMaximumCharacters,
+                    maximumVisibleTexts: settings.skylineLyrics.ambientMaximumVisibleTexts,
+                    opacityScale: settings.skylineLyrics.ambientOpacity,
+                    blurScale: CGFloat(settings.skylineLyrics.ambientBlur),
+                    maximumTilt: settings.skylineLyrics.ambientMaximumTilt,
+                    driftScale: CGFloat(settings.skylineLyrics.ambientDrift),
+                    transitionDuration: ambientTransitionDuration(at: activeIndex)
+                )
+            }
+        }
+        .clipped()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private var skylineBackground: some View {

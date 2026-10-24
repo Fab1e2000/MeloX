@@ -2,6 +2,7 @@ import CoreGraphics
 
 struct NowPlayingTabletLayout {
     let viewport: CGSize
+    var fillsRegion = false
 
     static let chromeHeight: CGFloat = 48
     static let lyricsTopPadding: CGFloat = 40
@@ -19,13 +20,17 @@ struct NowPlayingTabletLayout {
     }
 
     var contentHeight: CGFloat {
-        max(viewport.height - Self.chromeHeight - Self.bottomBarHeight, 0)
+        if fillsRegion { return viewport.height }
+        return max(viewport.height - Self.chromeHeight - Self.bottomBarHeight, 0)
     }
 
     var playerWidth: CGFloat {
+        if fillsRegion {
+            return max(min((320 + heightProgress * 102) * elementScale, viewport.width - 48), 1)
+        }
         // Preserve the desktop proportions while leaving room for both
         // columns in portrait and resizable iPad windows.
-        min((320 + heightProgress * 102) * elementScale, viewport.width * 0.5 - 40)
+        return min((320 + heightProgress * 102) * elementScale, viewport.width * 0.5 - 40)
     }
 
     var playerLeading: CGFloat {

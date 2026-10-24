@@ -435,10 +435,8 @@ struct ContentView: View {
                 Button {
                     navigate(to: .privateMessages, in: tab)
                 } label: {
-                    Image(
-                        systemName:
-                            "bubble.left.and.bubble.right"
-                    )
+                    Label("ui.messages.private.title", systemImage: "bubble.left.and.bubble.right")
+                        .labelStyle(.iconOnly)
                 }
                 .accessibilityLabel("ui.messages.private.title")
                 .accessibilityHint("ui.messages.private.open_hint")
@@ -447,7 +445,8 @@ struct ContentView: View {
             Button {
                 navigate(to: .songRecognition, in: tab)
             } label: {
-                Image(systemName: "waveform")
+                Label("ui.recognition.title", systemImage: "waveform")
+                    .labelStyle(.iconOnly)
             }
             .accessibilityLabel("ui.recognition.title")
 

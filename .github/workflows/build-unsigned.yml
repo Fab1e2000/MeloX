@@ -114,7 +114,7 @@ jobs:
           set -euo pipefail
 
           XCODE_APP=""
-          for candidate in /Applications/Xcode_26.5.app /Applications/Xcode_26.5.0.app /Applications/Xcode.app; do
+          for candidate in /Applications/Xcode_27.1.app /Applications/Xcode_27.1.0.app /Applications/Xcode.app; do
             if [[ -d "${candidate}" ]]; then
               XCODE_APP="${candidate}"
               break

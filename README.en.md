@@ -309,7 +309,7 @@ MeloX uses a fixed 32-second window and an FP16 Core ML ML Program. MeloX perfor
 
 ## Requirements
 
-- Xcode 26.6 or later
+- Xcode 27.1 or later
 - iOS / iPadOS 26.0 or later
 - macOS 15.0 or later
 - watchOS 10.0 or later (the watch app remains under development)
