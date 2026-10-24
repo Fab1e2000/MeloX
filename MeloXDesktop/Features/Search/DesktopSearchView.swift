@@ -264,7 +264,6 @@ struct DesktopSearchView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .frame(width: 164)
                 }
             }
         }
