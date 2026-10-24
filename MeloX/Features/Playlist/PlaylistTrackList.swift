@@ -6,6 +6,7 @@ struct PlaylistTrackList: View {
     let showsArtwork: Bool
     var onRemoveSong: ((Song) -> Void)?
     var downloadSelection: MusicCollectionDownloadCoordinator?
+    var highlightedSongID: Int?
 
     var body: some View {
         if tracks.isEmpty {
@@ -22,8 +23,10 @@ struct PlaylistTrackList: View {
                         index: index,
                         showsArtwork: showsArtwork,
                         downloadSelection: downloadSelection,
-                        onRemoveSong: onRemoveSong
+                        onRemoveSong: onRemoveSong,
+                        isHighlighted: highlightedSongID == song.id
                     )
+                    .id(song.id)
 
                     if song.id != tracks.last?.id {
                         Divider()
@@ -53,6 +56,7 @@ private struct PlaylistTrackRow: View {
     let showsArtwork: Bool
     let downloadSelection: MusicCollectionDownloadCoordinator?
     let onRemoveSong: ((Song) -> Void)?
+    let isHighlighted: Bool
 
     @Environment(\.openMusicRoute) private var openMusicRoute
     @Environment(PlayerStore.self) private var player
@@ -226,7 +230,10 @@ private struct PlaylistTrackRow: View {
         .padding(.leading, 20)
         .padding(.trailing, 8)
         .padding(.vertical, showsArtwork ? 8 : 11)
-        .background(isCurrentSong ? Color.primary.opacity(0.10) : .clear)
+        .background(
+            isHighlighted ? Color.accentColor.opacity(0.16)
+                : isCurrentSong ? Color.primary.opacity(0.10) : .clear
+        )
         .musicMatchedTransitionSource(for: .song(song))
         .accessibilityElement(children: .contain)
         .sheet(item: $presentedSheet) { sheet in

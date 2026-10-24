@@ -30,6 +30,9 @@ struct PlaylistDetailView: View {
     @State private var loadMoreTracksError: String?
     @State private var isPreparingPlayback = false
     @State private var playbackErrorMessage: String?
+    @State private var trackLocator = MusicCollectionTrackLocator()
+    @State private var songToLocate: Int?
+    @State private var locateErrorMessage: String?
     @State private var downloadCoordinator =
         MusicCollectionDownloadCoordinator()
 
@@ -62,34 +65,52 @@ struct PlaylistDetailView: View {
     }
 
     var body: some View {
-        PlaylistDetailContent(
-            playlist: displayedPlaylist,
-            toplistSummary: prefersToplistLayout ? initialPlaylist : nil,
-            palette: resolvedPalette,
-            blurredBackdropImage: blurredBackdropImage,
-            searchQuery: searchQuery,
-            isLoading: isInitialLoading,
-            failureMessage: initialFailureMessage,
-            hasMoreTracks: hasMoreTracks,
-            loadedTrackOffset: loadedTrackOffset,
-            isLoadingMoreTracks: isLoadingMoreTracks,
-            loadMoreTracksError: loadMoreTracksError,
-            isPreparingPlayback: isPreparingPlayback,
-            downloadCoordinator:
-                downloadsEnabled
-                    ? downloadCoordinator
+        ScrollViewReader { proxy in
+            PlaylistDetailContent(
+                playlist: displayedPlaylist,
+                toplistSummary: prefersToplistLayout ? initialPlaylist : nil,
+                palette: resolvedPalette,
+                blurredBackdropImage: blurredBackdropImage,
+                searchQuery: searchQuery,
+                isLoading: isInitialLoading,
+                failureMessage: initialFailureMessage,
+                hasMoreTracks: hasMoreTracks && songToLocate == nil,
+                loadedTrackOffset: loadedTrackOffset,
+                isLoadingMoreTracks: isLoadingMoreTracks,
+                loadMoreTracksError: loadMoreTracksError,
+                isPreparingPlayback: isPreparingPlayback,
+                downloadCoordinator:
+                    downloadsEnabled
+                        ? downloadCoordinator
+                        : nil,
+                onRetry: { reloadToken += 1 },
+                onRefresh: { await load() },
+                onLoadMore: { await loadMoreTracks() },
+                onPlayAll: { shuffled in
+                    await playAll(shuffled: shuffled)
+                },
+                onRemoveSong: library.canDelete(displayedPlaylist)
+                    && !isLoadingMoreTracks && songToLocate == nil
+                    ? { pendingRemoval = $0 }
                     : nil,
-            onRetry: { reloadToken += 1 },
-            onRefresh: { await load() },
-            onLoadMore: { await loadMoreTracks() },
-            onPlayAll: { shuffled in
-                await playAll(shuffled: shuffled)
-            },
-            onRemoveSong: library.canDelete(displayedPlaylist) && !isLoadingMoreTracks
-                ? { pendingRemoval = $0 }
-                : nil
-        )
+                highlightedSongID: trackLocator.highlightedSongID
+            )
+            .task(id: songToLocate) {
+                if let songToLocate { await locateSong(songToLocate) }
+            }
+            .task(id: trackLocator.request) {
+                await trackLocator.scroll(using: proxy, reduceMotion: accessibilityReduceMotion)
+            }
+        }
         .disabled(isRemovingTrack)
+        .alert("ui.collection.locate_failed", isPresented: Binding(
+            get: { locateErrorMessage != nil },
+            set: { if !$0 { locateErrorMessage = nil } }
+        )) {
+            Button("ui.common.ok", role: .cancel) { locateErrorMessage = nil }
+        } message: {
+            Text(locateErrorMessage ?? "")
+        }
         .confirmationDialog(
             "ui.playlists.remove_song",
             isPresented: Binding(
@@ -324,6 +345,10 @@ struct PlaylistDetailView: View {
     @ToolbarContentBuilder
     private func playlistToolbar(for playlist: Playlist) -> some ToolbarContent {
         ToolbarItemGroup(placement: .topBarTrailing) {
+            if songToLocate != nil {
+                ProgressView()
+                    .accessibilityLabel("ui.collection.locating_playing")
+            }
             if downloadsEnabled,
                downloadCoordinator.isPreparing {
                 ProgressView()
@@ -343,6 +368,12 @@ struct PlaylistDetailView: View {
             .accessibilityLabel(L10n.format("ui.common.share_named", collectionTitle))
 
             Menu {
+                Button("ui.collection.locate_playing", systemImage: "scope") {
+                    songToLocate = currentSongID
+                }
+                .disabled(currentSongID == nil || songToLocate != nil || isLoadingMoreTracks)
+                Divider()
+
                 if downloadsEnabled {
                     MusicCollectionDownloadMenuContent(
                         coordinator: downloadCoordinator,
@@ -417,9 +448,56 @@ struct PlaylistDetailView: View {
         }
     }
 
+    private var currentSongID: Int? {
+        guard case .loaded = phase,
+              let song = player.currentSong, let playlist,
+              playlist.tracks.contains(where: { $0.id == song.id })
+                || playlist.trackIDs.contains(where: { $0.id == song.id }),
+              !filterMusicCollectionTracks([song], query: searchQuery).isEmpty else { return nil }
+        return song.id
+    }
+
+    private func locateSong(_ songID: Int) async {
+        defer { songToLocate = nil }
+        locateErrorMessage = nil
+        guard var playlist else { return }
+
+        do {
+            if !playlist.tracks.contains(where: { $0.id == songID }),
+               let index = playlist.trackIDs.firstIndex(where: { $0.id == songID }) {
+                let endOffset = max(
+                    loadedTrackOffset,
+                    min((index / trackPageSize + 1) * trackPageSize, playlist.trackIDs.count)
+                )
+                playlist.tracks = try await api.songDetailsCollection(
+                    ids: playlist.trackIDs.prefix(endOffset).map(\.id),
+                    prefetched: playlist.tracks
+                )
+                try Task.checkCancellation()
+                self.playlist = playlist
+                loadedTrackOffset = endOffset
+                loadMoreTracksError = nil
+            }
+            guard playlist.tracks.contains(where: { $0.id == songID }) else {
+                locateErrorMessage = L10n.string("ui.collection.locate_unavailable")
+                return
+            }
+            guard filterMusicCollectionTracks(playlist.tracks, query: searchQuery)
+                .contains(where: { $0.id == songID }) else { return }
+            trackLocator.locate(songID)
+        } catch is CancellationError {
+            return
+        } catch {
+            locateErrorMessage = error.localizedDescription
+        }
+    }
+
     private func load(
         waitingForNavigationTransition: Bool = false
     ) async {
+        songToLocate = nil
+        trackLocator.reset()
+        locateErrorMessage = nil
         let transitionDelay = navigationTransitionDelay(
             isEnabled: waitingForNavigationTransition
         )
@@ -448,7 +526,7 @@ struct PlaylistDetailView: View {
     }
 
     private func removeSong(_ song: Song) async {
-        guard let playlist, !isLoadingMoreTracks else { return }
+        guard let playlist, !isLoadingMoreTracks, songToLocate == nil else { return }
         isRemovingTrack = true
         defer { isRemovingTrack = false }
         do {
@@ -467,6 +545,7 @@ struct PlaylistDetailView: View {
         guard let currentPlaylist = playlist,
               !isLoadingMoreTracks,
               !isRemovingTrack,
+              songToLocate == nil,
               loadedTrackOffset < currentPlaylist.trackIDs.count else {
             return
         }

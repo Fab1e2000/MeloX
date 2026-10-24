@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct DesktopLibraryView: View {
     @Environment(DesktopAppModel.self) private var model
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let section: DesktopSection
 
     @State private var showsCreation = false
@@ -13,27 +14,54 @@ struct DesktopLibraryView: View {
     @State private var showsImporter = false
     @State private var isPreparingPlayback = false
     @State private var playbackErrorMessage: String?
+    @State private var trackLocator = DesktopCollectionTrackLocator()
+    @State private var songToLocate: Int?
+    @State private var locateErrorMessage: String?
 
     private let columns = [
         GridItem(.adaptive(minimum: 145, maximum: 205), spacing: 20)
     ]
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 22) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(section.title)
-                        .font(.system(size: 32, weight: .bold))
-                    Spacer()
-                    headerActions
-                }
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 22) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(section.title)
+                            .font(.system(size: 32, weight: .bold))
+                        Spacer()
+                        headerActions
+                    }
 
-                content
+                    content
+                }
+                .padding(.horizontal, 34)
+                .padding(.vertical, 28)
             }
-            .padding(.horizontal, 34)
-            .padding(.vertical, 28)
+            .task(id: songToLocate) {
+                if let songToLocate { await locateSong(songToLocate) }
+            }
+            .task(id: trackLocator.request) {
+                await trackLocator.scroll(using: proxy, reduceMotion: reduceMotion)
+            }
         }
+        .onChange(of: section) {
+            songToLocate = nil
+            trackLocator.reset()
+        }
+        .desktopLoadingStatus(
+            L10n.string("ui.collection.locating_playing"),
+            isPresented: songToLocate != nil
+        )
         .navigationTitle(section.title)
+        .alert("ui.collection.locate_failed", isPresented: Binding(
+            get: { locateErrorMessage != nil },
+            set: { if !$0 { locateErrorMessage = nil } }
+        )) {
+            Button("ui.common.ok", role: .cancel) { locateErrorMessage = nil }
+        } message: {
+            Text(locateErrorMessage ?? "")
+        }
         .disabled(isDeletingPlaylist)
         .confirmationDialog(
             "ui.playlists.delete.title",
@@ -119,6 +147,16 @@ struct DesktopLibraryView: View {
     private var headerActions: some View {
         switch section {
         case .songs:
+            Menu {
+                Button("ui.collection.locate_playing", systemImage: "scope") {
+                    songToLocate = currentSongID
+                }
+                .disabled(currentSongID == nil || songToLocate != nil)
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .help(L10n.string("ui.common.more"))
+
             Button(action: playFavoriteSongs) {
                 HStack(spacing: 7) {
                     Label("ui.common.play_all", systemImage: "play.fill")
@@ -242,8 +280,11 @@ struct DesktopLibraryView: View {
                         song: song,
                         index: index,
                         songs: songs,
-                        showsArtwork: true
+                        showsArtwork: true,
+                        isHighlighted: section == .songs
+                            && trackLocator.highlightedSongID == song.id
                     )
+                    .id(song.id)
 
                     if song.id == songs.last?.id,
                        let loadMoreToken,
@@ -428,6 +469,25 @@ struct DesktopLibraryView: View {
             ) else { return }
             await model.player.playAll(detail.tracks, sourceID: playlist.id)
         }
+    }
+
+    private var currentSongID: Int? {
+        guard let song = model.player.currentSong,
+              model.library.contains(song: song) else { return nil }
+        return song.id
+    }
+
+    private func locateSong(_ songID: Int) async {
+        defer { songToLocate = nil }
+        locateErrorMessage = nil
+        let isLoaded = await model.library.loadFavoriteSongForLocation(songID)
+        guard !Task.isCancelled else { return }
+        guard isLoaded else {
+            locateErrorMessage = model.library.favoriteSongsLoadMoreError
+                ?? L10n.string("ui.collection.locate_unavailable")
+            return
+        }
+        trackLocator.locate(songID)
     }
 
     private func playFavoriteSongs() {

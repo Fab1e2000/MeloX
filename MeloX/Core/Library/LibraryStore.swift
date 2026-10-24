@@ -332,6 +332,22 @@ final class LibraryStore {
         favoriteSongPageLoadID = nil
     }
 
+    func loadFavoriteSongForLocation(_ songID: Int) async -> Bool {
+        if favoriteSongs.contains(where: { $0.id == songID }) { return true }
+        let requestedIDs = favoriteSongIDs
+        guard let index = requestedIDs.firstIndex(of: songID) else { return false }
+
+        while favoriteSongsNextOffset <= index, hasMoreFavoriteSongs {
+            guard !Task.isCancelled else { return false }
+            let previousOffset = favoriteSongsNextOffset
+            await loadMoreFavoriteSongs()
+            guard !Task.isCancelled,
+                  favoriteSongIDs == requestedIDs,
+                  favoriteSongsNextOffset > previousOffset else { return false }
+        }
+        return favoriteSongs.contains(where: { $0.id == songID })
+    }
+
     func loadRemainingFavoriteSongs() async {
         while hasMoreFavoriteSongs {
             guard !Task.isCancelled else { return }

@@ -1912,6 +1912,10 @@
 "ui.desktop.collection.unfavorite" = "取消收藏";
 "ui.desktop.collection.favorite" = "收藏";
 "ui.desktop.collection.download_all" = "下载全部";
+"ui.collection.locate_playing" = "定位到正在播放";
+"ui.collection.locating_playing" = "正在定位播放歌曲…";
+"ui.collection.locate_failed" = "无法定位播放歌曲";
+"ui.collection.locate_unavailable" = "暂时无法载入这首歌曲，请稍后重试。";
 "ui.desktop.collection.disc" = "碟片 %ld";
 "ui.desktop.explore.new_songs" = "新歌速递";
 "ui.desktop.explore.popular_artists" = "热门艺人";

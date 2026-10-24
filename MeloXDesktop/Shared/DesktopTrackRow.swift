@@ -12,6 +12,7 @@ struct DesktopTrackRow: View {
     var showsAlbumColumn = true
     var displayNumber: String?
     var onRemoveSong: ((Song) -> Void)?
+    var isHighlighted = false
 
     @State private var isHovered = false
     @State private var showsPlaylistCreation = false
@@ -93,7 +94,9 @@ struct DesktopTrackRow: View {
         .padding(.horizontal, 12)
         .frame(minHeight: showsArtwork ? 54 : 46)
         .background(
-            isHovered ? Color.primary.opacity(0.045) : .clear,
+            isHighlighted
+                ? Color.accentColor.opacity(0.16)
+                : isHovered ? Color.primary.opacity(0.045) : .clear,
             in: .rect(cornerRadius: 8)
         )
         .contentShape(.rect)

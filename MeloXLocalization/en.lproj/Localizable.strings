@@ -1912,6 +1912,10 @@
 "ui.desktop.collection.unfavorite" = "Remove from Favorites";
 "ui.desktop.collection.favorite" = "Favorite";
 "ui.desktop.collection.download_all" = "Download All";
+"ui.collection.locate_playing" = "Locate Now Playing";
+"ui.collection.locating_playing" = "Locating Now Playing…";
+"ui.collection.locate_failed" = "Could Not Locate Now Playing";
+"ui.collection.locate_unavailable" = "This song could not be loaded. Please try again later.";
 "ui.desktop.collection.disc" = "Disc %ld";
 "ui.desktop.explore.new_songs" = "New Music";
 "ui.desktop.explore.popular_artists" = "Popular Artists";
