@@ -17,6 +17,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "6DB1D881300F5FA000FB3AEE"
                BuildableName = "MeloX.app"
+               BlueprintName = "MeloX"
                ReferencedContainer = "container:MeloX.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -46,6 +47,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6DB1D881300F5FA000FB3AEE"
             BuildableName = "MeloX.app"
+            BlueprintName = "MeloX"
             ReferencedContainer = "container:MeloX.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,6 +64,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6DB1D881300F5FA000FB3AEE"
             BuildableName = "MeloX.app"
+            BlueprintName = "MeloX"
             ReferencedContainer = "container:MeloX.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
