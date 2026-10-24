@@ -64,7 +64,8 @@ struct LibraryView: View {
         .libraryNavigationTitle(
             fixedPage.map { AppTab(libraryPage: $0).title }
                 ?? L10n.string("ui.navigation.library"),
-            isPresented: showsNavigationTitle
+            isPresented: showsNavigationTitle,
+            usesInlineTitle: fixedPage == nil && availablePages.count > 1
         )
         .librarySearchable(
             text: $searchQuery,
@@ -218,10 +219,12 @@ private extension View {
     @ViewBuilder
     func libraryNavigationTitle(
         _ title: String,
-        isPresented: Bool
+        isPresented: Bool,
+        usesInlineTitle: Bool
     ) -> some View {
         if isPresented {
             navigationTitle(title)
+                .navigationBarTitleDisplayMode(usesInlineTitle ? .inline : .automatic)
         } else {
             self
         }
