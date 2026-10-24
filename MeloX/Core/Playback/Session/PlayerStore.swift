@@ -1011,6 +1011,9 @@ final class PlayerStore {
         cancelAutoMixPreparation()
         loadGeneration += 1
         let generation = loadGeneration
+        // Unloading can publish the outgoing deck's final clock sample.
+        // Finish those callbacks before initializing the incoming song's timeline.
+        engine.unload()
         currentSong = song
         let cachedDetailedSong = detailedPlaybackSongs[song.id]
         resolveCurrentSongAudioAvailability(
@@ -1038,7 +1041,6 @@ final class PlayerStore {
             nowPlayingLyrics = []
             publishedNowPlayingLyricID = nil
         }
-        engine.unload()
         nowPlayingSession.setSong(
             song,
             duration: duration,

@@ -9,11 +9,9 @@ final class NetworkSessionDelegate: NSObject, URLSessionDataDelegate {
     weak var taskProvider: StreamTaskProvider?
 
     func stream(for task: URLSessionTask) -> NetworkDataStream? {
-        guard let taskProvider = taskProvider else {
-            assertionFailure("couldn't found taskProvider")
-            return nil
-        }
-        return taskProvider.dataStream(for: task)
+        // URLSession can deliver queued callbacks after its owning client has
+        // been released. The weak provider is expected to be nil in that case.
+        taskProvider?.dataStream(for: task)
     }
 
     func urlSession(_: URLSession,
@@ -43,6 +41,7 @@ final class NetworkSessionDelegate: NSObject, URLSessionDataDelegate {
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void)
     {
         guard let stream = stream(for: dataTask) else {
+            completionHandler(.cancel)
             return
         }
         stream.didReceive(response: response as? HTTPURLResponse)
