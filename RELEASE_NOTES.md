@@ -8,6 +8,7 @@
 - 增加了听歌识曲的应用内音频来源，以及 iOS 27 的跨 App 本机内录
 - 增加了歌单、专辑和收藏歌曲的「定位到正在播放」功能
 - 修复了音乐库分类切换入口只有标题收起后才显示的问题
+- 修复了蜂窝网络下无法修改无线网络播放音质的问题
 - 修复了歌单与专辑收藏失败的问题（感谢 @Fab1e2000）
 - 修复了切歌后沿用上一首播放进度，以及延迟网络回调可能导致崩溃的问题（感谢 @Arcdiverrr1026）
 - 修复了音译歌词逐字高亮错乱、换行后提前变白的问题
@@ -19,6 +20,7 @@
 - Added App Audio for Song Recognition and cross-app System Audio capture on iOS 27
 - Added “Locate Now Playing” to playlists, albums, and favorite songs
 - Fixed the library category switcher being available only after the navigation title collapsed
+- Fixed Wi-Fi playback quality changes being applied to cellular quality when using cellular data
 - Fixed failures when adding playlists and albums to favorites (thanks to @Fab1e2000)
 - Fixed tracks inheriting the previous song's playback position and potential crashes from late network callbacks (thanks to @Arcdiverrr1026)
 - Fixed incorrect word-by-word highlighting and premature highlighting after line wrapping in transliterated lyrics

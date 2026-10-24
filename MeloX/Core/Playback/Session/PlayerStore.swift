@@ -545,8 +545,9 @@ final class PlayerStore {
         playbackIssue = nil
     }
 
-    func selectPlaybackQuality(_ quality: MusicQuality) {
-        let currentQuality = api.isCellularData
+    func selectPlaybackQuality(_ quality: MusicQuality, forCellularData: Bool? = nil) {
+        let targetsCellularData = forCellularData ?? api.isCellularData
+        let currentQuality = targetsCellularData
             ? settings.cellularQuality
             : settings.quality
         guard currentQuality != quality else { return }
@@ -555,12 +556,12 @@ final class PlayerStore {
         let resumePosition = engine.currentPlaybackTime
             ?? estimatedProgress()
         let songID = currentSong?.id
-        if api.isCellularData {
+        if targetsCellularData {
             settings.cellularQuality = quality
         } else {
             settings.quality = quality
         }
-        guard let songID else { return }
+        guard targetsCellularData == api.isCellularData, let songID else { return }
         seekRevision += 1
         let qualityChangeRevision = seekRevision
         Task { @MainActor [weak self] in
