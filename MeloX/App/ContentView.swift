@@ -374,6 +374,7 @@ struct ContentView: View {
                         path: navigationPathBinding(for: tab)
                     ) {
                         tabRoot(for: tab)
+                            .modifier(RootTabNavigationStyle())
                             .toolbar {
                                 primaryToolbar(for: tab)
                             }
@@ -401,7 +402,6 @@ struct ContentView: View {
         case .recommended:
             HomeRecommendedView()
                 .navigationTitle("ui.navigation.recommended")
-                .navigationBarTitleDisplayMode(.large)
         case .music:
             ExploreView(navigationTitle: L10n.string("ui.navigation.music"))
         case .podcasts:

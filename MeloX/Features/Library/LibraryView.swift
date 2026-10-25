@@ -224,7 +224,7 @@ private extension View {
     ) -> some View {
         if isPresented {
             navigationTitle(title)
-                .navigationBarTitleDisplayMode(usesInlineTitle ? .inline : .automatic)
+                .toolbarTitleDisplayMode(usesInlineTitle ? .inline : .inlineLarge)
         } else {
             self
         }
