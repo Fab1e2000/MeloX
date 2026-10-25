@@ -87,12 +87,15 @@ struct NowPlayingQueuePage: View {
             .scrollContentBackground(.hidden)
             .scrollIndicators(.visible)
             .contentMargins(.top, 0, for: .scrollContent)
+            // The mask also clips the system indicator. Start its track at
+            // the visible queue edge without changing the content offset.
+            .contentMargins(.top, visibleQueueTopInset, for: .scrollIndicators)
             .environment(\.defaultMinListRowHeight, 1)
             .environment(\.defaultMinListHeaderHeight, 0)
             .environment(\.editMode, .constant(.active))
             .mask {
                 Rectangle()
-                    .padding(.top, modeControlsOffset + 60)
+                    .padding(.top, visibleQueueTopInset)
             }
             .overlay(alignment: .top) {
                 // A single set of controls moves continuously, then stays at
@@ -177,6 +180,10 @@ struct NowPlayingQueuePage: View {
 
     private var modeControlsOffset: CGFloat {
         max(reservedSongHeaderHeight - scrollOffset, 0)
+    }
+
+    private var visibleQueueTopInset: CGFloat {
+        modeControlsOffset + 60
     }
 
     private func updateSongHeaderState(for offset: CGFloat) {
